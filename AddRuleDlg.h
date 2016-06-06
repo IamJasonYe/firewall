@@ -67,7 +67,17 @@ protected:
 	afx_msg void OnKillfocusDport();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+private:
+	void CheckValidity(CString& protocal, 
+						CString& action, 
+						CString& m_ssadd, 
+						CString& m_sdadd, 
+						CString& m_ssport, 
+						CString& m_sdport, 
+						CString& smask, 
+						CString& dmask);
 };
+
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.

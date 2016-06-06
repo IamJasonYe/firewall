@@ -11,6 +11,8 @@
 #include "Addruledlg.h"
 #include "tdriver.h"
 #include "MainFrm.h"
+#include <queue>
+#include <string>
 
 class CFireView : public CFormView
 {
@@ -105,10 +107,11 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 private:
+	std::string ProtocolName(USHORT v);
 	void AddFilters();
 	void ShowFilters();
 	void ReadFilters();
-	filterList* m_filterList;
+	std:: queue<std::string> m_filterList;
 	HANDLE _hFile;
 	void ClearListCtrl();
 		CBrush* m_pBrush;

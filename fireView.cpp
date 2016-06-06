@@ -6,13 +6,16 @@
 #include "fireDoc.h"
 #include "fireView.h"
 #include "Sockutil.h"
-#include <fstream.h>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+using namespace std;
 
 /////////////////////////////////////////////////////////////////////////////
 // CFireView
@@ -278,14 +281,14 @@ void CFireView::ShowHeaders()
 void CFireView::OnShowWindow(BOOL bShow, UINT nStatus) 
 {
 	CFormView::OnShowWindow(bShow, nStatus);
-	AddHeader(_T("Dest IP"));
-	AddHeader(_T("Dest MASK"));
-	AddHeader(_T("Dest PORT"));
-	AddHeader(_T("Source IP"));
-	AddHeader(_T("Source MASK"));
-	AddHeader(_T("Source PORT"));
 	AddHeader(_T("PROTOCOL"));
 	AddHeader(_T("ACTION"));
+	AddHeader(_T("Source IP"));
+	AddHeader(_T("Dest IP"));
+	AddHeader(_T("Source PORT"));
+	AddHeader(_T("Dest PORT"));
+	AddHeader(_T("Source MASK"));
+	AddHeader(_T("Dest MASK"));
 }
 
 void CFireView::OnStop() 
@@ -368,18 +371,116 @@ void CFireView::AddFilters()
 
 void CFireView::ReadFilters()
 {
-	ifstream in("saved.url");
+	std::ifstream in("saved.rul");
+
+	// Clear the queue of filters list.
+	while(!m_filterList.empty()) m_filterList.pop();
+	//filterList* ptr = m_filterList;
+	//ptr->next = NULL;
+	//ptr->ipf = NULL;
+	while(!in.eof()) {
+		char s;		// To take the beginning of the syntax;
+		in >> s;
+		//IPFilter* ipf;
+		if(s!='{')	// File structure error
+			return;
+		else{
+			//ipf = new IPFilter();
+		}
+		string element;
+		while(in >> element) {
+			/*if(element.find("protocol") != std::string::npos) {
+				string value;
+				in >> value;
+				//ipf->protocol = (USHORT) atoi(value.c_str());
+				m_filterList.push(value);
+			}
+			if(element.find("action") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->drop = (value == "1");
+			}
+			if(element.find("saddr") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->sourceIp = inet_addr(value.c_str());
+			}
+			if(element.find("daddr") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->destinationIp = inet_addr(value.c_str());
+			}
+			if(element.find("sport") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->sourcePort = htons(atoi(value.c_str()));
+			}
+			if(element.find("dport") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->destinationPort = htons(atoi(value.c_str()));
+			}
+			if(element.find("smask") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->sourceMask = inet_addr(value.c_str());
+			}
+			if(element.find("dmask") != std::string::npos) {
+				string value;
+				in >> value;
+				ipf->destinationMask = inet_addr(value.c_str());
+			}*/
+			if(element == "}")
+				break;
+			else {
+				string value;
+				if(element.find("protocol") != std::string::npos) {
+					USHORT v;	in >> v;
+					value = ProtocolName(v);
+				} else if(element.find("action") != std::string::npos) {
+					int v; in >> v;
+					value = v == 1?"DENY":"ALLOW";					
+				} else {
+					in >> value;
+				}
+				//MessageBox(value.c_str());
+				m_filterList.push(value);
+			}
+		}
+		
+/*		ptr->ipf = *ipf;
+		ptr->next = new filterList();
+		ptr->next->ipf = NULL;
+		ptr->next->next = NULL;
+		ptr = ptr->next;*/
+	}
+
 }
+
 
 void CFireView::ShowFilters()
 {
-	// TODO:
-	AddItem(0,0,"test00",-1);
-	AddItem(0,1,"test01",-1);
-	AddItem(0,2,"test02",-1);
-	AddItem(1,0,"test10",-1);
-	AddItem(1,1,"test11",-1);
-	AddItem(1,2,"test12",-1);
-	AddItem(1,3,"test13",-1);
+// TODO:
+	while(!m_filterList.empty())
+	{
+		int code = AddItem(0,0,m_filterList.front().c_str(),-1);
+		m_filterList.pop();
+		for (int i=1; i<8; i++){
+			//MessageBox(m_filterList.front().c_str());
+			AddItem(0, i, m_filterList.front().c_str(), -1);
+			m_filterList.pop();
+		}
+	}
+	//MessageBox("Finished");
+}
+
+string CFireView::ProtocolName(USHORT v)
+{
+	switch(v){
+		case 1:		return string("ICMP");
+		case 6:		return string("TCP");
+		case 17:	return string("UDP");
+		case 65535: return string("N/A");
+	}
 }
 

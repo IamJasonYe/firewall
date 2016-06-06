@@ -113,25 +113,38 @@ void CAddRuleDlg::OnKillfocusDadd()
 void CAddRuleDlg::OnAddsave() 
 {
 	// Get and convert string from dialog components.
-	IPFilter pf;
-	pf.protocol			= ProtocolNum(m_protocol.GetCurSel());
-	pf.sourceIp			= inet_addr(m_ssadd);
-	pf.destinationIp	= inet_addr(m_sdadd);
-	pf.sourcePort		= htons(atoi(m_ssport));
-	pf.destinationPort	= htons(atoi(m_sdport));
-	pf.drop				= m_action.GetCurSel() == 1;
-	AddFilter(pf);
 
+	CString protocal; 
+	if(m_protocol.GetCurSel() != -1)
+		protocal.Format(_T("%d"),ProtocolNum(m_protocol.GetCurSel()));
+	else
+		protocal = "-1";
+	CString action; action.Format(_T("%d"), m_action.GetCurSel());
+	CString smask, dmask;
+	// Check the inputs
+	CheckValidity(protocal, action, m_ssadd, m_sdadd, m_ssport, m_sdport, smask, dmask);
+	
 	if(NewFile()) { // Create File Successfully
 		GotoEnd();
-		CString protocal; protocal.Format(_T("%d"),ProtocolNum(m_protocol.GetCurSel()));
-		CString action; action.Format(_T("%d"), m_action.GetCurSel());
-		CString str = CString("Protocol:") + protocal + " "
-					"action:" + action + " "
-					"saddr:" + m_ssadd + " " 
-					"daddr:" + m_sdadd + " "
-					"sport:" + m_ssport + " "
-					"dport:" + m_sdport + "\n";
+		IPFilter pf;
+		pf.protocol			= ProtocolNum(m_protocol.GetCurSel());
+		pf.sourceIp			= inet_addr(m_ssadd);
+		pf.destinationIp	= inet_addr(m_sdadd);
+		pf.sourceMask		= inet_addr(smask);
+		pf.destinationMask 	= inet_addr(dmask);
+		pf.sourcePort		= htons(atoi(m_ssport));
+		pf.destinationPort	= htons(atoi(m_sdport));
+		pf.drop				= m_action.GetCurSel() == 1;
+		AddFilter(pf);
+	
+		CString str = "{\n    [protocol] " + protocal + " "
+					"[action] " + action + " "
+					"[saddr] " + m_ssadd + " " 
+					"[daddr] " + m_sdadd + " "
+					"[sport] " + m_ssport + " "
+					"[dport] " + m_sdport + " "
+					"[smask] " + smask + " "
+					"[dmask] " + dmask + " \n}\n";
 		SaveFile( (LPTSTR)(LPCTSTR)str);
 		CloseFile();
 		MessageBox("Saved!");
@@ -246,5 +259,34 @@ USHORT CAddRuleDlg::ProtocolNum(int sel)
 		case 0: return 1;	// ICMP
 		case 1: return 6;	// TCP
 		case 2: return 17;	// UDP
+	}
+}
+
+void CAddRuleDlg::CheckValidity(CString& protocal, 
+								CString& action, 
+								CString& m_ssadd, 
+								CString& m_sdadd, 
+								CString& m_ssport, 
+								CString& m_sdport, 
+								CString& smask, 
+								CString& dmask) {
+	if(m_ssadd.IsEmpty()) {
+		m_ssadd = "0.0.0.0";
+		smask = "0.0.0.0";
+	} else {
+		smask = "255.255.255.255";
+	}
+	if(m_sdadd.IsEmpty()) {
+		m_sdadd = "0.0.0.0";
+		dmask = "0.0.0.0";
+	} else {
+		dmask = "255.255.255.255";
+	}
+	if(m_ssport.IsEmpty()) {
+		m_ssport = "-1";
+	}
+
+	if(m_sdport.IsEmpty()) {
+		m_sdport = "-1";
 	}
 }
